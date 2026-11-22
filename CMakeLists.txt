@@ -58,6 +58,14 @@ add_library(${MAIN_LIBRARY_NAME}
         src/ElementeOrbitale.cpp
         src/Coordonate.cpp
         src/ElementeOrbitale.cpp
+        include/Satelit.hpp
+        src/Satelit.cpp
+        include/StatieSpatiala.hpp
+        src/StatieSpatiala.cpp
+        include/SatelitStarlink.hpp
+        src/SatelitStarlink.cpp
+        include/TelescopSpatial.hpp
+        src/TelescopSpatial.cpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
