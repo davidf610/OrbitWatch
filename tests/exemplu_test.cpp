@@ -1,53 +1,66 @@
-// Main ships no test framework on purpose: plain assert / static_assert only.
-// Full framework examples live on tests/gtest and tests/Boost-ext-ut branches.
-
-// assert() disappears when NDEBUG is defined (Release, RelWithDebInfo): the
-// binary would exit 0 having checked nothing, and CI would call that a pass.
-// Keep the checks on in every build type.
-#undef NDEBUG
 #include <cassert>
-#include <stdexcept>
+#include <chrono>
+#include <cmath>
 
-#include "Example.h"      // the library under test; include/ comes from oop
+#include "Coordonate.hpp"
+#include "ElementeOrbitale.hpp"
+#include "OrbitExceptii.hpp"
 
-static_assert(Example::limit > 0, "the invariant below assumes a positive limit");
+namespace {
 
-// checked through the public interface only: the helper behind the invariant is
-// file-local in src/Example.cpp and cannot even be named here
+    bool aproapeEgal(double a, double b, double eps = 1e-6) {
+        return std::abs(a - b) < eps;
+    }
+
+    void testeazaCoordonate() {
+        // 1. Caz valid (ex: Bragadiru)
+        const orbitwatch::CoordonateGeo loc(44.37, 25.98, 0.08);
+        assert(aproapeEgal(loc.latitudine(), 44.37));
+        assert(aproapeEgal(loc.longitudine(), 25.98));
+        assert(aproapeEgal(loc.altitudineKm(), 0.08));
+
+        // 2. Caz invalid - latitudine peste 90 grade
+        bool aAruncatLat = false;
+        try {
+            const orbitwatch::CoordonateGeo invalid(95.0, 25.0);
+            (void)invalid;
+        } catch (const orbitwatch::CoordonateInvalide&) {
+            aAruncatLat = true;
+        }
+        assert(aAruncatLat);
+
+        // 3. Coordonate orizontale
+        const orbitwatch::CoordonateOrizontale oriz(180.0, 45.0, 550.0);
+        assert(aproapeEgal(oriz.azimut(), 180.0));
+        assert(aproapeEgal(oriz.elevatie(), 45.0));
+        assert(aproapeEgal(oriz.distantaKm(), 550.0));
+    }
+
+    void testeazaElementeOrbitale() {
+        const auto acum = std::chrono::system_clock::now();
+        const orbitwatch::ElementeOrbitale elem(
+            acum,
+            51.6416,  // inclinatie
+            247.4627, // raan
+            0.00067,  // excentricitate
+            130.5360, // argument perigeu
+            325.0288, // anomalie medie
+            15.4956   // mean motion
+        );
+
+        assert(elem.epoch() == acum);
+        assert(aproapeEgal(elem.inclinatie(), 51.6416));
+        assert(aproapeEgal(elem.raan(), 247.4627));
+        assert(aproapeEgal(elem.excentricitate(), 0.00067));
+        assert(aproapeEgal(elem.argumentPerigeu(), 130.5360));
+        assert(aproapeEgal(elem.anomalieMedie(), 325.0288));
+        assert(aproapeEgal(elem.meanMotion(), 15.4956));
+    }
+
+}
+
 int main() {
-    Example e;
-    assert(e.value() == 0);
-
-    e.add(7);
-    assert(e.value() == 7);
-    e.add(-7);
-    assert(e.value() == 0);
-
-    bool threw = false;
-    try {
-        e.add(-1);
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw && "add() must refuse to go below 0");
-    assert(e.value() == 0 && "a failed call leaves the object untouched");
-
-    threw = false;
-    try {
-        e.add(Example::limit + 1);
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw && "add() must refuse to go above limit");
-
-    threw = false;
-    try {
-        Example broken{Example::limit + 1};
-        (void) broken;
-    } catch (const std::invalid_argument&) {
-        threw = true;
-    }
-    assert(threw && "the constructor must not hand out a broken object either");
-
+    testeazaCoordonate();
+    testeazaElementeOrbitale();
     return 0;
 }
