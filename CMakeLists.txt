@@ -27,30 +27,22 @@ include(cmake/CopyHelper.cmake)
 include(CTest)
 include(cmake/RegisterTests.cmake)
 
-###############################################################################
+include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
-# External dependencies with FetchContent
+set(FTXUI_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(FTXUI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FTXUI_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 
-# include(FetchContent)
-#
-# set(FETCHCONTENT_QUIET OFF CACHE INTERNAL "Override verbose output" FORCE)
-# set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE INTERNAL "Override update strategy" FORCE)
-#
-# NOTE: Also update env vars used for caching in
-#     - .github/actions/configure-cmake/action.yml
-#     - .github/workflows/cmake.yml
-# FetchContent_Declare(
-#     SomeLib
-#     SYSTEM         # keeps ext libs out of static code analysis
-#     GIT_REPOSITORY https://github.com/<SomeUser>/<SomeLib>.git
-#     GIT_TAG        <some_git_hash> # <which tag/branch @ <some_date>>
-#     GIT_SHALLOW    1  # works only with branches or tags, not with arbitrary commit hashes
-#     GIT_PROGRESS   ON
-# )
-#
-# FetchContent_MakeAvailable(SomeLib)
-
-###############################################################################
+FetchContent_Declare(
+        ftxui
+        GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI
+        GIT_TAG v6.1.9 # verifică ultima versiune stabilă pe GitHub releases (ex. v6.1.9 sau v5.0.0)
+        GIT_SHALLOW 1
+        SYSTEM
+)
+FetchContent_MakeAvailable(ftxui)
 
 # External dependencies with find_package
 
@@ -61,7 +53,8 @@ include(cmake/RegisterTests.cmake)
 # Configure sources
 
 # always STATIC (simpler); TBD if we ever want dynamic for this; BUILD_SHARED_LIBS is for ext deps
-add_library(${MAIN_LIBRARY_NAME} STATIC)
+add_library(${MAIN_LIBRARY_NAME} STATIC
+        ext/private/json.hpp)
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
 add_executable(${MAIN_EXECUTABLE_NAME}
@@ -101,16 +94,13 @@ target_include_directories(${MAIN_LIBRARY_NAME} SYSTEM PRIVATE
 
 # target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ${<SomeLib>_SOURCE_DIR}/include)
 
-###############################################################################
-
-# Link libraries
-
-target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE ${MAIN_LIBRARY_NAME})
-
-# target_link_directories(${MAIN_EXECUTABLE_NAME} PRIVATE ${<SomeLib>_BINARY_DIR}/lib)
-# target_link_libraries(${MAIN_EXECUTABLE_NAME} <SomeLib>)
-
-###############################################################################
+target_link_libraries(${MAIN_EXECUTABLE_NAME}
+        PRIVATE
+        ${MAIN_LIBRARY_NAME}
+        ftxui::screen
+        ftxui::dom
+        ftxui::component
+)
 
 # copy binaries to "bin" folder; these are uploaded as artifacts on each release
 # DESTINATION_DIR is set as "bin" in cmake/Options.cmake

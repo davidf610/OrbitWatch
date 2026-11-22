@@ -1,5 +1,5 @@
 #include "Example.h"
-
+#include <json.hpp> //temporar
 #include <iostream>
 #include <stdexcept>
 
