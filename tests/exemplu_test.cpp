@@ -11,6 +11,7 @@
 #include "SatelitStarlink.hpp"
 #include "StatieSpatiala.hpp"
 #include "TelescopSpatial.hpp"
+#include "ParserDateOrbitale.hpp"
 
 namespace {
 
@@ -131,11 +132,42 @@ void testeazaIerarhieSateliti() {
     assert(starlinkPtr->esteInTrenLansare());
 }
 
-} // namespace
+    void testeazaParserDateOrbitale() {
+    // 1. Incarcare reala din assets/sateliti.json
+    const auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    assert(sateliti.size() == 3);
+    assert(sateliti[0]->noradId() == 25544);
+    assert(sateliti[0]->tipText() == "Statie Spatiala");
+    assert(sateliti[1]->tipText() == "Starlink (Tren Lansare)");
+    assert(sateliti[2]->tipText() == "Telescop Spatial");
+
+    // 2. Fisier inexistent -> EroareFisier
+    bool aAruncatFisier = false;
+    try {
+        const auto lista = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/nu_exista.json");
+        (void)lista;
+    } catch (const orbitwatch::EroareFisier&) {
+        aAruncatFisier = true;
+    }
+    assert(aAruncatFisier);
+
+    // 3. JSON invalid -> EroareParsare
+    bool aAruncatJson = false;
+    try {
+        const auto lista = orbitwatch::ParserDateOrbitale::incarcaDinString("{ invalid json");
+        (void)lista;
+    } catch (const orbitwatch::EroareParsare&) {
+        aAruncatJson = true;
+    }
+    assert(aAruncatJson);
+}
+
+}
 
 int main() {
     testeazaCoordonate();
     testeazaElementeOrbitale();
     testeazaIerarhieSateliti();
+    testeazaParserDateOrbitale();
     return 0;
 }

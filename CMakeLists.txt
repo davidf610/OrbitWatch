@@ -66,6 +66,8 @@ add_library(${MAIN_LIBRARY_NAME}
         src/SatelitStarlink.cpp
         include/TelescopSpatial.hpp
         src/TelescopSpatial.cpp
+        include/ParserDateOrbitale.hpp
+        src/ParserDateOrbitale.cpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
