@@ -68,6 +68,10 @@ add_library(${MAIN_LIBRARY_NAME}
         src/TelescopSpatial.cpp
         include/ParserDateOrbitale.hpp
         src/ParserDateOrbitale.cpp
+        include/TrecereSatelit.hpp
+        src/TrecereSatelit.cpp
+        include/PropagatorOrbital.hpp
+        src/PropagatorOrbital.cpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here

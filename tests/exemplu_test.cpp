@@ -3,6 +3,7 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <sstream>
 
 #include "Coordonate.hpp"
 #include "ElementeOrbitale.hpp"
@@ -12,6 +13,9 @@
 #include "StatieSpatiala.hpp"
 #include "TelescopSpatial.hpp"
 #include "ParserDateOrbitale.hpp"
+#include "PropagatorOrbital.hpp"
+#include "TrecereSatelit.hpp"
+
 
 namespace {
 
@@ -161,6 +165,41 @@ void testeazaIerarhieSateliti() {
     }
     assert(aAruncatJson);
 }
+    void testeazaPropagatorSiTreceri() {
+    const auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    const orbitwatch::CoordonateGeo bucuresti(44.4268, 26.1025, 0.08);
+    const auto start = sateliti[0]->elemente().epoch();
+
+    // 1. Pozitia si elevatia Soarelui trebuie sa fie in limite fizice valide
+    const auto poz = orbitwatch::PropagatorOrbital::calculeazaPozitie(*sateliti[0], bucuresti, start);
+    assert(poz.azimut() >= 0.0 && poz.azimut() < 360.0);
+    assert(poz.elevatie() >= -90.0 && poz.elevatie() <= 90.0);
+    assert(poz.distantaKm() > 100.0);
+
+    const double elevSoare = orbitwatch::PropagatorOrbital::calculeazaElevatieSoare(bucuresti, start);
+    assert(elevSoare >= -90.0 && elevSoare <= 90.0);
+
+    const bool iluminat = orbitwatch::PropagatorOrbital::esteIluminatDeSoare(*sateliti[0], start);
+    (void)iluminat;
+
+    // 2. Scanare pe 48h pentru ISS
+    const auto treceri = orbitwatch::PropagatorOrbital::gasesteTreceriVizibile(
+        *sateliti[0], bucuresti, start, std::chrono::hours{48}, std::chrono::seconds{60});
+
+    for (const auto& t : treceri) {
+        assert(!t.numeSatelit().empty());
+        assert(!t.tipSatelit().empty());
+        assert(t.oraInceput() <= t.oraMaxim());
+        assert(t.oraMaxim() <= t.oraSfarsit());
+        assert(t.elevatieMaxima() >= 10.0);
+        assert(t.azimutMaxim() >= 0.0 && t.azimutMaxim() < 360.0);
+        assert(!std::isnan(t.magnitudineMinima()));
+
+        std::ostringstream oss;
+        oss << t;
+        assert(!oss.str().empty());
+    }
+}
 
 }
 
@@ -169,5 +208,6 @@ int main() {
     testeazaElementeOrbitale();
     testeazaIerarhieSateliti();
     testeazaParserDateOrbitale();
+    testeazaPropagatorSiTreceri();
     return 0;
 }
