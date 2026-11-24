@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "Coordonate.hpp"
@@ -44,6 +45,7 @@ namespace orbitwatch {
         [[nodiscard]] int noradId() const noexcept { return noradId_; }
         [[nodiscard]] const std::string& nume() const noexcept { return nume_; }
         [[nodiscard]] const ElementeOrbitale& elemente() const noexcept { return elemente_; }
+        friend std::ostream& operator<<(std::ostream& os, const Satelit& satelit);
     };
 
 } 

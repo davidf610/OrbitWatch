@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <ostream>
 
 namespace orbitwatch {
 
@@ -29,6 +30,7 @@ namespace orbitwatch {
         [[nodiscard]] double argumentPerigeu() const noexcept { return argumentPerigeu_; }
         [[nodiscard]] double anomalieMedie() const noexcept { return anomalieMedie_; }
         [[nodiscard]] double meanMotion() const noexcept { return meanMotion_; }
+        friend std::ostream& operator<<(std::ostream& os, const ElementeOrbitale& elem);
     };
 
 } 

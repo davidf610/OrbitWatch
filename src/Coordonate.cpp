@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <string>
+#include <iomanip>
 
 namespace orbitwatch {
 
@@ -23,7 +24,8 @@ namespace orbitwatch {
     }
 
     CoordonateOrizontale::CoordonateOrizontale(double azimut, double elevatie, double distantaKm)
-        : azimut_(azimut), elevatie_(elevatie), distantaKm_(distantaKm) {
+        : azimut_(azimut), elevatie_(elevatie), distantaKm_(distantaKm)
+    {
         if (std::isnan(azimut_) || azimut_ < 0.0 || azimut_ >= 360.0) {
             throw CoordonateInvalide("Azimutul trebuie sa fie in [0, 360), primit: " +
                                      std::to_string(azimut_));
@@ -37,5 +39,22 @@ namespace orbitwatch {
                                      std::to_string(distantaKm_));
         }
     }
+        std::ostream& operator<<(std::ostream& os, const CoordonateGeo& coord) {
+            os << std::fixed << std::setprecision(4)
+               << "Lat: " << coord.latitudine_ << " deg, "
+               << "Lon: " << coord.longitudine_ << " deg, "
+               << std::setprecision(2)
+               << "Alt: " << coord.altitudineKm_ << " km";
+            return os;
+        }
+
+        std::ostream& operator<<(std::ostream& os, const CoordonateOrizontale& coord) {
+            os << std::fixed << std::setprecision(1)
+               << "Az: " << coord.azimut_ << " deg, "
+               << "El: " << coord.elevatie_ << " deg, "
+               << "Dist: " << coord.distantaKm_ << " km";
+            return os;
+        }
+
 
 }

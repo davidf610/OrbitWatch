@@ -34,5 +34,10 @@ namespace orbitwatch {
         }
         return true;
     }
+    std::ostream& operator<<(std::ostream& os, const Satelit& satelit) {
+        os << "[" << satelit.noradId_ << "] " << satelit.nume_
+           << " (" << satelit.tipText() << ") | " << satelit.elemente_;
+        return os;
+    }
 
 }

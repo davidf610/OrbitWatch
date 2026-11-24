@@ -15,7 +15,7 @@
 #include "ParserDateOrbitale.hpp"
 #include "PropagatorOrbital.hpp"
 #include "TrecereSatelit.hpp"
-
+#include "ManagerTreceri.hpp"
 
 namespace {
 
@@ -24,10 +24,10 @@ bool aproapeEgal(double a, double b, double eps = 1e-6) {
 }
 
 void testeazaCoordonate() {
-    // 1. Caz valid (ex: Bragadiru)
-    const orbitwatch::CoordonateGeo loc(44.37, 25.98, 0.08);
-    assert(aproapeEgal(loc.latitudine(), 44.37));
-    assert(aproapeEgal(loc.longitudine(), 25.98));
+    // 1. Caz valid (ex: Bucuresti)
+    const orbitwatch::CoordonateGeo loc(44.4268, 26.1025, 0.08);
+    assert(aproapeEgal(loc.latitudine(), 44.4268));
+    assert(aproapeEgal(loc.longitudine(), 26.1025));
     assert(aproapeEgal(loc.altitudineKm(), 0.08));
 
     // 2. Caz invalid - latitudine peste 90 grade
@@ -46,6 +46,14 @@ void testeazaCoordonate() {
     assert(aproapeEgal(oriz.azimut(), 180.0));
     assert(aproapeEgal(oriz.elevatie(), 45.0));
     assert(aproapeEgal(oriz.distantaKm(), 550.0));
+
+    std::ostringstream ossGeo;
+    ossGeo << loc;
+    assert(!ossGeo.str().empty());
+
+    std::ostringstream ossOriz;
+    ossOriz << oriz;
+    assert(!ossOriz.str().empty());
 }
 
 void testeazaElementeOrbitale() {
@@ -68,6 +76,9 @@ void testeazaElementeOrbitale() {
     assert(aproapeEgal(elem.argumentPerigeu(), 130.5360));
     assert(aproapeEgal(elem.anomalieMedie(), 325.0288));
     assert(aproapeEgal(elem.meanMotion(), 15.4956));
+    std::ostringstream ossElem;
+    ossElem << elem;
+    assert(!ossElem.str().empty());
 }
 
 void testeazaIerarhieSateliti() {
@@ -128,6 +139,9 @@ void testeazaIerarhieSateliti() {
         assert(copie->noradId() == sat->noradId());
         assert(copie->nume() == sat->nume());
         assert(copie->tipText() == sat->tipText());
+        std::ostringstream ossSat;
+        ossSat << *sat;
+        assert(!ossSat.str().empty());
     }
 
     // Verificare getter specific Starlink
@@ -200,7 +214,35 @@ void testeazaIerarhieSateliti() {
         assert(!oss.str().empty());
     }
 }
+    void testeazaManagerTreceri() {
+    auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    const auto start = sateliti[0]->elemente().epoch();
+    const orbitwatch::CoordonateGeo bucuresti(44.4268, 26.1025, 0.08);
 
+    orbitwatch::ManagerTreceri manager(bucuresti, std::move(sateliti));
+    assert(manager.numarSateliti() == 3);
+
+    const auto& treceri = manager.calculeazaTreceri(start, std::chrono::hours{48});
+    const auto filtrate = manager.filtreazaDupaElevatie(25.0);
+    assert(filtrate.size() <= treceri.size());
+
+    const auto ceaMaiBuna = manager.ceaMaiBunaTrecere();
+    assert(ceaMaiBuna.has_value() == !treceri.empty());
+
+    // Testare Rule of Three (copy constructor + operator=)
+    orbitwatch::ManagerTreceri copie(manager);
+    assert(copie.numarSateliti() == manager.numarSateliti());
+
+    copie.actualizeazaObservator(orbitwatch::CoordonateGeo(46.7712, 23.6236, 0.34));
+    assert(aproapeEgal(copie.observator().latitudine(), 46.7712));
+
+    copie = manager;
+    assert(aproapeEgal(copie.observator().latitudine(), 44.4268));
+
+    std::ostringstream oss;
+    oss << copie;
+    assert(!oss.str().empty());
+}
 }
 
 int main() {
@@ -209,5 +251,6 @@ int main() {
     testeazaIerarhieSateliti();
     testeazaParserDateOrbitale();
     testeazaPropagatorSiTreceri();
+    testeazaManagerTreceri();
     return 0;
 }

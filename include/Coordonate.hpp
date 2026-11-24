@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace orbitwatch {
 
     class CoordonateGeo {
@@ -14,6 +16,7 @@ namespace orbitwatch {
         [[nodiscard]] double latitudine() const noexcept { return latitudine_; }
         [[nodiscard]] double longitudine() const noexcept { return longitudine_; }
         [[nodiscard]] double altitudineKm() const noexcept { return altitudineKm_; }
+        friend std::ostream& operator<<(std::ostream& os, const CoordonateGeo& coord);
     };
 
     class CoordonateOrizontale {
@@ -28,6 +31,7 @@ namespace orbitwatch {
         [[nodiscard]] double azimut() const noexcept { return azimut_; }
         [[nodiscard]] double elevatie() const noexcept { return elevatie_; }
         [[nodiscard]] double distantaKm() const noexcept { return distantaKm_; }
+        friend std::ostream& operator<<(std::ostream& os, const CoordonateOrizontale& coord);
     };
 
 }

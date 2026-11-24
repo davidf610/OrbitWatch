@@ -1,25 +1,24 @@
-#include <algorithm>
 #include <chrono>
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <vector>
+#include <utility>
 
 #include "Coordonate.hpp"
+#include "ManagerTreceri.hpp"
 #include "ParserDateOrbitale.hpp"
-#include "PropagatorOrbital.hpp"
-#include "TrecereSatelit.hpp"
 
 namespace {
 
 void afiseazaMeniu(const orbitwatch::CoordonateGeo& observator) {
     std::cout << "\nOrbit Watch\n"
-              << "Locatie curenta: lat=" << observator.latitudine()
-              << ", lon=" << observator.longitudine()
-              << ", alt=" << observator.altitudineKm() << " km\n"
-              << "1. Afiseaza satelitii incarcati\n"
+              << "Locatie curenta: " << observator << '\n'
+              << "1. Afiseaza starea curenta (sateliti si treceri)\n"
               << "2. Seteaza locatia observatorului\n"
               << "3. Calculeaza trecerile vizibile\n"
+              << "4. Filtreaza trecerile dupa elevatie minima\n"
+              << "5. Afiseaza cea mai buna trecere (magnitudine minima)\n"
+              << "6. Compara cu o alta locatie (test copiere manager)\n"
               << "0. Iesire\n"
               << "Optiune: ";
 }
@@ -33,7 +32,7 @@ void curataInput() {
 
 int main() {
     try {
-        const auto sateliti =
+        auto sateliti =
             orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
 
         if (sateliti.empty()) {
@@ -41,12 +40,13 @@ int main() {
             return 0;
         }
 
-        // Locatie implicita: Bucuresti
-        orbitwatch::CoordonateGeo observator(44.4268, 26.1025, 0.08);
+        const auto epochStart = sateliti[0]->elemente().epoch();
+        orbitwatch::ManagerTreceri manager(
+            orbitwatch::CoordonateGeo(44.4268, 26.1025, 0.08), std::move(sateliti));
 
         int optiune = -1;
         while (true) {
-            afiseazaMeniu(observator);
+            afiseazaMeniu(manager.observator());
             if (!(std::cin >> optiune)) {
                 if (std::cin.eof()) {
                     break;
@@ -62,12 +62,7 @@ int main() {
             }
 
             if (optiune == 1) {
-                std::cout << "\nSateliti incarcati (" << sateliti.size() << "):\n";
-                for (const auto& sat : sateliti) {
-                    std::cout << " - [" << sat->noradId() << "] " << sat->nume()
-                              << " | Tip: " << sat->tipText()
-                              << " | Elevatie min: " << sat->elevatieMinimaNecesara() << " deg\n";
-                }
+                std::cout << '\n' << manager;
             } else if (optiune == 2) {
                 double lat = 0.0;
                 double lon = 0.0;
@@ -79,45 +74,67 @@ int main() {
                     continue;
                 }
                 try {
-                    observator = orbitwatch::CoordonateGeo(lat, lon, alt);
-                    std::cout << "Locatie actualizata.\n";
+                    manager.actualizeazaObservator(orbitwatch::CoordonateGeo(lat, lon, alt));
+                    std::cout << "Locatie actualizata: " << manager.observator() << '\n';
                 } catch (const std::exception& e) {
                     std::cout << "Eroare coordonate: " << e.what() << '\n';
                 }
             } else if (optiune == 3) {
                 int ore = 48;
-                std::cout << "Durata scanare in ore (ex: 24, 48): ";
+                std::cout << "Durata scanare in ore (1..168): ";
                 if (!(std::cin >> ore) || ore <= 0 || ore > 168) {
-                    std::cout << "Durata invalida (alege intre 1 si 168 ore).\n";
+                    std::cout << "Durata invalida.\n";
                     curataInput();
                     continue;
                 }
 
-                // Pornim de la epoch-ul datelor pentru rezultate consistente si reproductibile
-                const auto start = sateliti[0]->elemente().epoch();
-                std::vector<orbitwatch::TrecereSatelit> toateTrecerile;
-
-                for (const auto& sat : sateliti) {
-                    auto treceri = orbitwatch::PropagatorOrbital::gasesteTreceriVizibile(
-                        *sat, observator, start, std::chrono::hours{ore}, std::chrono::seconds{60});
-                    toateTrecerile.insert(toateTrecerile.end(), treceri.begin(), treceri.end());
-                }
-
-                std::sort(toateTrecerile.begin(),
-                          toateTrecerile.end(),
-                          [](const orbitwatch::TrecereSatelit& a,
-                             const orbitwatch::TrecereSatelit& b) {
-                              return a.oraInceput() < b.oraInceput();
-                          });
-
-                if (toateTrecerile.empty()) {
+                const auto& treceri =
+                    manager.calculeazaTreceri(epochStart, std::chrono::hours{ore});
+                if (treceri.empty()) {
                     std::cout << "Nicio trecere vizibila in urmatoarele " << ore << " ore.\n";
                 } else {
-                    std::cout << "\nTreceri vizibile (" << toateTrecerile.size() << "):\n";
-                    for (const auto& trecere : toateTrecerile) {
-                        std::cout << " - " << trecere << '\n';
+                    std::cout << "\nTreceri vizibile (" << treceri.size() << "):\n";
+                    for (const auto& t : treceri) {
+                        std::cout << " - " << t << '\n';
                     }
                 }
+            } else if (optiune == 4) {
+                double elevMin = 20.0;
+                std::cout << "Elevatie minima (grade): ";
+                if (!(std::cin >> elevMin) || elevMin < 0.0 || elevMin > 90.0) {
+                    std::cout << "Elevatie invalida.\n";
+                    curataInput();
+                    continue;
+                }
+
+                const auto filtrate = manager.filtreazaDupaElevatie(elevMin);
+                if (filtrate.empty()) {
+                    std::cout << "Nicio trecere peste " << elevMin << " grade.\n";
+                } else {
+                    std::cout << "\nTreceri peste " << elevMin << " grade (" << filtrate.size()
+                              << "):\n";
+                    for (const auto& t : filtrate) {
+                        std::cout << " - " << t << '\n';
+                    }
+                }
+            } else if (optiune == 5) {
+                const auto ceaMaiBuna = manager.ceaMaiBunaTrecere();
+                if (!ceaMaiBuna.has_value()) {
+                    std::cout << "Nu exista treceri calculate inca (ruleaza optiunea 3).\n";
+                } else {
+                    std::cout << "Cea mai buna trecere:\n - " << *ceaMaiBuna << '\n';
+                }
+            } else if (optiune == 6) {
+                orbitwatch::ManagerTreceri copie(manager);
+                copie.actualizeazaObservator(orbitwatch::CoordonateGeo(46.7712, 23.6236, 0.34));
+                const auto& treceriCluj =
+                    copie.calculeazaTreceri(epochStart, std::chrono::hours{48});
+                std::cout << "Comparatie Cluj-Napoca (" << copie.numarSateliti()
+                          << " sateliti): " << treceriCluj.size() << " treceri vizibile.\n";
+
+                // Demonstrare operator= de copiere
+                copie = manager;
+                std::cout << "Dupa restaurare copie: " << copie.observator() << '\n';
             } else {
                 std::cout << "Optiune necunoscuta.\n";
             }

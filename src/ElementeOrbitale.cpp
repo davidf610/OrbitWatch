@@ -1,8 +1,10 @@
 #include "ElementeOrbitale.hpp"
-#include "OrbitExceptii.hpp"
 
 #include <cmath>
+#include <iomanip>
 #include <string>
+
+#include "OrbitExceptii.hpp"
 
 namespace orbitwatch {
 
@@ -31,6 +33,16 @@ namespace orbitwatch {
             throw EroareParsare("Mean motion trebuie sa fie strict pozitiv: " +
                                 std::to_string(meanMotion_));
         }
+    }
+
+    std::ostream& operator<<(std::ostream& os, const ElementeOrbitale& elem) {
+        os << std::fixed << std::setprecision(4)
+           << "Inc: " << elem.inclinatie_ << " deg, "
+           << "RAAN: " << elem.raan_ << " deg, "
+           << "Ecc: " << std::setprecision(5) << elem.excentricitate_ << ", "
+           << std::setprecision(4)
+           << "MM: " << elem.meanMotion_ << " rev/zi";
+        return os;
     }
 
 }
