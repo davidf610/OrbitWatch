@@ -72,6 +72,8 @@ add_library(oop STATIC
         src/PropagatorOrbital.cpp
         include/ManagerTreceri.hpp
         src/ManagerTreceri.cpp
+        include/RaportTreceri.hpp
+        src/RaportTreceri.cpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here

@@ -3,24 +3,27 @@
 #include <iostream>
 #include <limits>
 #include <utility>
+#include <filesystem>
 
 #include "Coordonate.hpp"
 #include "ManagerTreceri.hpp"
 #include "ParserDateOrbitale.hpp"
+#include "RaportTreceri.hpp"
 
 namespace {
 
 void afiseazaMeniu(const orbitwatch::CoordonateGeo& observator) {
     std::cout << "\nOrbit Watch\n"
-              << "Locatie curenta: " << observator << '\n'
-              << "1. Afiseaza starea curenta (sateliti si treceri)\n"
-              << "2. Seteaza locatia observatorului\n"
-              << "3. Calculeaza trecerile vizibile\n"
-              << "4. Filtreaza trecerile dupa elevatie minima\n"
-              << "5. Afiseaza cea mai buna trecere (magnitudine minima)\n"
-              << "6. Compara cu o alta locatie (test copiere manager)\n"
-              << "0. Iesire\n"
-              << "Optiune: ";
+        << "Locatie curenta: " << observator << '\n'
+        << "1. Afiseaza starea curenta (sateliti si treceri)\n"
+        << "2. Seteaza locatia observatorului\n"
+        << "3. Calculeaza trecerile vizibile\n"
+        << "4. Filtreaza trecerile dupa elevatie minima\n"
+        << "5. Afiseaza cea mai buna trecere (magnitudine minima)\n"
+        << "6. Compara cu o alta locatie (test copiere manager)\n"
+        << "7. Genereaza raport detaliat\n"
+        << "0. Iesire\n"
+        << "Optiune: ";
 }
 
 void curataInput() {
@@ -132,9 +135,17 @@ int main() {
                 std::cout << "Comparatie Cluj-Napoca (" << copie.numarSateliti()
                           << " sateliti): " << treceriCluj.size() << " treceri vizibile.\n";
 
-                // Demonstrare operator= de copiere
                 copie = manager;
                 std::cout << "Dupa restaurare copie: " << copie.observator() << '\n';
+            } else if (optiune == 7) {
+                const auto filtrate = manager.filtreazaDupaElevatie(0.0);
+                orbitwatch::RaportTreceri raport("Raport OrbitWatch", manager.observator(), filtrate);
+                std::cout << '\n' << raport;
+
+                const auto dirTemp = std::filesystem::temp_directory_path();
+                raport.exportaCsv(dirTemp / "orbitwatch_raport.csv");
+                raport.exportaText(dirTemp / "orbitwatch_raport.txt");
+                std::cout << "Raport exportat in: " << dirTemp.string() << '\n';
             } else {
                 std::cout << "Optiune necunoscuta.\n";
             }

@@ -17,6 +17,8 @@
 #include "PropagatorOrbital.hpp"
 #include "TrecereSatelit.hpp"
 #include "ManagerTreceri.hpp"
+#include "RaportTreceri.hpp"
+#include <filesystem>
 
 namespace {
 
@@ -25,7 +27,7 @@ bool aproapeEgal(double a, double b, double eps = 1e-6) {
 }
 
 void testeazaCoordonate() {
-    // 1. Caz valid (ex: Bucuresti)
+    // 1. Caz valid (Bucuresti)
     const orbitwatch::CoordonateGeo loc(44.4268, 26.1025, 0.08);
     assert(aproapeEgal(loc.latitudine(), 44.4268));
     assert(aproapeEgal(loc.longitudine(), 26.1025));
@@ -244,6 +246,38 @@ void testeazaIerarhieSateliti() {
     oss << copie;
     assert(!oss.str().empty());
 }
+    void testeazaRaportTreceri() {
+    auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    const auto start = sateliti[0]->elemente().epoch();
+    const orbitwatch::CoordonateGeo bucuresti(44.4268, 26.1025, 0.08);
+
+    orbitwatch::ManagerTreceri manager(bucuresti, std::move(sateliti));
+    const auto& treceri = manager.calculeazaTreceri(start, std::chrono::hours{48});
+
+    orbitwatch::RaportTreceri raport("Test Raport", bucuresti, treceri);
+    assert(raport.titlu() == "Test Raport");
+    assert(raport.numarTreceri() == treceri.size());
+    assert(raport.durataMedieSecunde() >= 0.0);
+
+    const auto stats = raport.statisticiPeTip();
+    assert(stats.size() <= 3);
+
+    const auto rezumat = raport.genereazaRezumatText();
+    assert(!rezumat.empty());
+
+    std::ostringstream oss;
+    oss << raport;
+    assert(oss.str() == rezumat);
+
+    const auto caleCsv = std::filesystem::temp_directory_path() / "orbitwatch_test.csv";
+    const auto caleTxt = std::filesystem::temp_directory_path() / "orbitwatch_test.txt";
+    raport.exportaCsv(caleCsv);
+    raport.exportaText(caleTxt);
+    assert(std::filesystem::exists(caleCsv));
+    assert(std::filesystem::exists(caleTxt));
+    std::filesystem::remove(caleCsv);
+    std::filesystem::remove(caleTxt);
+}
 }
 
 int main() {
@@ -254,6 +288,8 @@ int main() {
         testeazaParserDateOrbitale();
         testeazaPropagatorSiTreceri();
         testeazaManagerTreceri();
+        testeazaRaportTreceri();
+
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Test esuat cu exceptie: " << e.what() << '\n';
