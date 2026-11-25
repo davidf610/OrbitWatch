@@ -246,11 +246,16 @@ void testeazaIerarhieSateliti() {
 }
 
 int main() {
-    testeazaCoordonate();
-    testeazaElementeOrbitale();
-    testeazaIerarhieSateliti();
-    testeazaParserDateOrbitale();
-    testeazaPropagatorSiTreceri();
-    testeazaManagerTreceri();
-    return 0;
+    try {
+        testeazaCoordonate();
+        testeazaElementeOrbitale();
+        testeazaIerarhieSateliti();
+        testeazaParserDateOrbitale();
+        testeazaPropagatorSiTreceri();
+        testeazaManagerTreceri();
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Test esuat cu exceptie: " << e.what() << '\n';
+        return 1;
+    }
 }

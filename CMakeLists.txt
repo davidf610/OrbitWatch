@@ -53,7 +53,7 @@ FetchContent_MakeAvailable(ftxui)
 # Configure sources
 
 # always STATIC (simpler); TBD if we ever want dynamic for this; BUILD_SHARED_LIBS is for ext deps
-add_library(${MAIN_LIBRARY_NAME}
+add_library(oop STATIC
         src/Coordonate.cpp
         src/ElementeOrbitale.cpp
         src/Coordonate.cpp
