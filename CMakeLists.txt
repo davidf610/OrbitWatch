@@ -27,9 +27,10 @@ include(cmake/CopyHelper.cmake)
 include(CTest)
 include(cmake/RegisterTests.cmake)
 
-include(FetchContent)
+#[[ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
 
 set(FTXUI_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(FTXUI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -43,6 +44,7 @@ FetchContent_Declare(
         SYSTEM
 )
 FetchContent_MakeAvailable(ftxui)
+]]
 
 # External dependencies with find_package
 
@@ -124,9 +126,9 @@ target_include_directories(${MAIN_LIBRARY_NAME} SYSTEM PRIVATE
 target_link_libraries(${MAIN_EXECUTABLE_NAME}
         PRIVATE
         ${MAIN_LIBRARY_NAME}
-        ftxui::screen
-        ftxui::dom
-        ftxui::component
+        # ftxui::screen
+        # ftxui::dom
+        # ftxui::component 
 )
 
 # copy binaries to "bin" folder; these are uploaded as artifacts on each release

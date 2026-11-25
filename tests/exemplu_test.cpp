@@ -273,8 +273,10 @@ void testeazaIerarhieSateliti() {
     const auto caleTxt = std::filesystem::temp_directory_path() / "orbitwatch_test.txt";
     raport.exportaCsv(caleCsv);
     raport.exportaText(caleTxt);
-    assert(std::filesystem::exists(caleCsv));
-    assert(std::filesystem::exists(caleTxt));
+    const bool existaCsv = std::filesystem::exists(caleCsv);
+    const bool existaTxt = std::filesystem::exists(caleTxt);
+    assert(existaCsv);
+    assert(existaTxt);
     std::filesystem::remove(caleCsv);
     std::filesystem::remove(caleTxt);
 }
