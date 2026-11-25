@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
 
 #include "Coordonate.hpp"
 #include "ElementeOrbitale.hpp"
@@ -18,7 +19,10 @@
 #include "TrecereSatelit.hpp"
 #include "ManagerTreceri.hpp"
 #include "RaportTreceri.hpp"
-#include <filesystem>
+#include "CatalogLocatii.hpp"
+#include "PlanificatorObservatii.hpp"
+#include "ComparatorLocatii.hpp"
+
 
 namespace {
 
@@ -280,6 +284,64 @@ void testeazaIerarhieSateliti() {
     std::filesystem::remove(caleCsv);
     std::filesystem::remove(caleTxt);
 }
+    void testeazaCatalogSiPlanificator() {
+    auto catalog = orbitwatch::CatalogLocatii::incarcaDinFisier("assets/locatii.json");
+    assert(!catalog.gol());
+    assert(catalog.dimensiune() >= 5);
+
+    const auto buc = catalog.cautaDupaNume("bucuresti");
+    assert(buc.has_value());
+    assert(!buc->esteCerIntunecat());
+
+    const auto cerIntunecat = catalog.filtreazaDupaBortleMaxim(3);
+    assert(!cerIntunecat.empty());
+
+    const auto celMaiIntunecat = catalog.celMaiIntunecatCer();
+    assert(celMaiIntunecat.has_value());
+    assert(celMaiIntunecat->esteCerIntunecat());
+
+    const auto apropiata = catalog.ceaMaiApropiataDe(buc->coordonate());
+    assert(apropiata.has_value());
+    assert(apropiata->nume() == "Bucuresti");
+
+    auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    const auto start = sateliti[0]->elemente().epoch();
+    orbitwatch::ManagerTreceri manager(celMaiIntunecat->coordonate(), std::move(sateliti));
+    const auto& treceri = manager.calculeazaTreceri(start, std::chrono::hours{48});
+
+    orbitwatch::PlanificatorObservatii planificator(*celMaiIntunecat, treceri);
+    assert(planificator.plan().size() == treceri.size());
+    assert(planificator.scorMediu() >= 0.0);
+
+    const auto programOptim = planificator.selecteazaProgramFaraConflicte();
+    assert(programOptim.size() <= treceri.size());
+
+    std::ostringstream oss;
+    oss << catalog << planificator;
+    assert(!oss.str().empty());
+}
+    void testeazaComparatorLocatii() {
+    const auto catalog = orbitwatch::CatalogLocatii::incarcaDinFisier("assets/locatii.json");
+    auto sateliti = orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
+    const auto start = sateliti[0]->elemente().epoch();
+    orbitwatch::ManagerTreceri manager(
+        catalog.locatii().front().coordonate(), std::move(sateliti));
+
+    orbitwatch::ComparatorLocatii comparator(
+        catalog, manager, start, std::chrono::hours{48});
+    assert(comparator.clasament().size() == catalog.dimensiune());
+
+    const auto top = comparator.ceaMaiBunaLocatie();
+    assert(top.has_value());
+    assert(top->scorMediu() >= comparator.clasament().back().scorMediu());
+
+    const auto eligibile = comparator.filtreazaCuTreceriMinime(1);
+    assert(eligibile.size() <= comparator.clasament().size());
+
+    std::ostringstream oss;
+    oss << comparator;
+    assert(!oss.str().empty());
+}
 }
 
 int main() {
@@ -291,6 +353,8 @@ int main() {
         testeazaPropagatorSiTreceri();
         testeazaManagerTreceri();
         testeazaRaportTreceri();
+        testeazaCatalogSiPlanificator();
+        testeazaComparatorLocatii();
 
         return 0;
     } catch (const std::exception& e) {

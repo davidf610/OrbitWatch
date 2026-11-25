@@ -1,0 +1,50 @@
+[
+  {
+    "nume": "Bucuresti",
+    "tara": "Romania",
+    "latitudine": 44.4268,
+    "longitudine": 26.1025,
+    "altitudine_km": 0.08,
+    "bortle": 8
+  },
+  {
+    "nume": "Cluj-Napoca",
+    "tara": "Romania",
+    "latitudine": 46.7712,
+    "longitudine": 23.6236,
+    "altitudine_km": 0.34,
+    "bortle": 7
+  },
+  {
+    "nume": "Brasov",
+    "tara": "Romania",
+    "latitudine": 45.6579,
+    "longitudine": 25.6012,
+    "altitudine_km": 0.60,
+    "bortle": 6
+  },
+  {
+    "nume": "Balea Lac",
+    "tara": "Romania",
+    "latitudine": 45.6036,
+    "longitudine": 24.6175,
+    "altitudine_km": 2.03,
+    "bortle": 3
+  },
+  {
+    "nume": "Sfantu Gheorghe (Delta)",
+    "tara": "Romania",
+    "latitudine": 44.8960,
+    "longitudine": 29.5910,
+    "altitudine_km": 0.002,
+    "bortle": 2
+  },
+  {
+    "nume": "Timisoara",
+    "tara": "Romania",
+    "latitudine": 45.7489,
+    "longitudine": 21.2087,
+    "altitudine_km": 0.09,
+    "bortle": 7
+  }
+]

@@ -76,6 +76,12 @@ add_library(oop STATIC
         src/ManagerTreceri.cpp
         include/RaportTreceri.hpp
         src/RaportTreceri.cpp
+        include/CatalogLocatii.hpp
+        src/CatalogLocatii.cpp
+        include/PlanificatorObservatii.hpp
+        src/internal/PlanificatorObservatii.cpp
+        include/ComparatorLocatii.hpp
+        src/ComparatorLocatii.cpp
 )
 
 # NOTE: update EXECUTABLE_NAME in .github/workflows/cmake.yml when changing name here
@@ -128,7 +134,7 @@ target_link_libraries(${MAIN_EXECUTABLE_NAME}
         ${MAIN_LIBRARY_NAME}
         # ftxui::screen
         # ftxui::dom
-        # ftxui::component 
+        # ftxui::component
 )
 
 # copy binaries to "bin" folder; these are uploaded as artifacts on each release

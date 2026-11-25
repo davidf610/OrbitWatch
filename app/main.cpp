@@ -4,11 +4,15 @@
 #include <limits>
 #include <utility>
 #include <filesystem>
+#include <string>
 
 #include "Coordonate.hpp"
 #include "ManagerTreceri.hpp"
 #include "ParserDateOrbitale.hpp"
 #include "RaportTreceri.hpp"
+#include "CatalogLocatii.hpp"
+#include "PlanificatorObservatii.hpp"
+#include "ComparatorLocatii.hpp"
 
 namespace {
 
@@ -22,6 +26,8 @@ void afiseazaMeniu(const orbitwatch::CoordonateGeo& observator) {
         << "5. Afiseaza cea mai buna trecere (magnitudine minima)\n"
         << "6. Compara cu o alta locatie (test copiere manager)\n"
         << "7. Genereaza raport detaliat\n"
+        << "8. Alege locatie din catalog si genereaza plan de observatii\n"
+        << "9. Compara toate locatiile din catalog (clasament)\n"
         << "0. Iesire\n"
         << "Optiune: ";
 }
@@ -35,6 +41,12 @@ void curataInput() {
 
 int main() {
     try {
+        const auto catalog = orbitwatch::CatalogLocatii::incarcaDinFisier("assets/locatii.json");
+        if (catalog.gol()) {
+            std::cout << "Nu s-au gasit locatii in assets/locatii.json.\n";
+            return 0;
+        }
+
         auto sateliti =
             orbitwatch::ParserDateOrbitale::incarcaDinFisier("assets/sateliti.json");
 
@@ -45,7 +57,7 @@ int main() {
 
         const auto epochStart = sateliti[0]->elemente().epoch();
         orbitwatch::ManagerTreceri manager(
-            orbitwatch::CoordonateGeo(44.4268, 26.1025, 0.08), std::move(sateliti));
+            catalog.locatii().front().coordonate(), std::move(sateliti));
 
         int optiune = -1;
         while (true) {
@@ -128,15 +140,25 @@ int main() {
                     std::cout << "Cea mai buna trecere:\n - " << *ceaMaiBuna << '\n';
                 }
             } else if (optiune == 6) {
-                orbitwatch::ManagerTreceri copie(manager);
-                copie.actualizeazaObservator(orbitwatch::CoordonateGeo(46.7712, 23.6236, 0.34));
-                const auto& treceriCluj =
-                    copie.calculeazaTreceri(epochStart, std::chrono::hours{48});
-                std::cout << "Comparatie Cluj-Napoca (" << copie.numarSateliti()
-                          << " sateliti): " << treceriCluj.size() << " treceri vizibile.\n";
+                std::cout << "Introdu numele locatiei pentru comparatie: ";
+                std::string numeComparatie;
+                std::getline(std::cin >> std::ws, numeComparatie);
 
-                copie = manager;
-                std::cout << "Dupa restaurare copie: " << copie.observator() << '\n';
+                const auto locatieComp = catalog.cautaDupaNume(numeComparatie);
+                if (!locatieComp.has_value()) {
+                    std::cout << "Locatia '" << numeComparatie << "' nu exista in catalog.\n";
+                } else {
+                    orbitwatch::ManagerTreceri copie(manager);
+                    copie.actualizeazaObservator(locatieComp->coordonate());
+                    const auto& treceriComp =
+                        copie.calculeazaTreceri(epochStart, std::chrono::hours{48});
+                    std::cout << "Comparatie " << locatieComp->nume() << " ("
+                              << copie.numarSateliti() << " sateliti): " << treceriComp.size()
+                              << " treceri vizibile.\n";
+
+                    copie = manager;
+                    std::cout << "Dupa restaurare copie: " << copie.observator() << '\n';
+                }
             } else if (optiune == 7) {
                 const auto filtrate = manager.filtreazaDupaElevatie(0.0);
                 orbitwatch::RaportTreceri raport("Raport OrbitWatch", manager.observator(), filtrate);
@@ -146,6 +168,73 @@ int main() {
                 raport.exportaCsv(dirTemp / "orbitwatch_raport.csv");
                 raport.exportaText(dirTemp / "orbitwatch_raport.txt");
                 std::cout << "Raport exportat in: " << dirTemp.string() << '\n';
+            } else if (optiune == 8) {
+                std::cout << '\n' << catalog;
+                std::cout << "Total locatii disponibile: " << catalog.locatii().size() << '\n';
+                if (const auto intunecat = catalog.celMaiIntunecatCer()) {
+                    std::cout << "Cel mai intunecat cer: " << *intunecat << '\n';
+                }
+                if (const auto apropiata = catalog.ceaMaiApropiataDe(manager.observator())) {
+                    std::cout << "Cea mai apropiata locatie din catalog: " << *apropiata << '\n';
+                }
+
+                std::cout << "Introdu numele locatiei din catalog: ";
+                std::string numeOras;
+                std::getline(std::cin >> std::ws, numeOras);
+
+                double scorMinim = 0.0;
+                std::cout << "Scor minim dorit (0..100): ";
+                if (!(std::cin >> scorMinim)) {
+                    std::cout << "Valoare invalida.\n";
+                    curataInput();
+                    continue;
+                }
+
+                const auto locatieAleasa = catalog.cautaDupaNume(numeOras);
+                if (!locatieAleasa.has_value()) {
+                    std::cout << "Locatia '" << numeOras << "' nu a fost gasita in catalog.\n";
+                } else {
+                    manager.actualizeazaObservator(locatieAleasa->coordonate());
+                    const auto& treceriNoi =
+                        manager.calculeazaTreceri(epochStart, std::chrono::hours{48});
+                    orbitwatch::PlanificatorObservatii planificator(*locatieAleasa, treceriNoi);
+                    std::cout << '\n' << planificator;
+
+                    const auto faraConflicte = planificator.selecteazaProgramFaraConflicte();
+                    const auto scorBun = planificator.filtreazaDupaScorMinim(scorMinim);
+
+                    std::cout << "Plan generat pentru: " << planificator.locatie().nume() << ", "
+                              << planificator.locatie().tara() << '\n';
+                    std::cout << "Program fara conflicte: " << faraConflicte.size()
+                              << " treceri | Cu scor >= " << scorMinim << ": " << scorBun.size()
+                              << '\n';
+                    if (!faraConflicte.empty()) {
+                        std::cout << "Prima recomandare: " << faraConflicte.front().recomandare()
+                                  << '\n';
+                    }
+                }
+            } else if (optiune == 9) {
+                int oreComp = 0;
+                std::size_t minimTreceri = 0;
+                std::cout << "Durata comparatie in ore (1..168) si numar minim treceri: ";
+                if (!(std::cin >> oreComp >> minimTreceri) || oreComp <= 0 || oreComp > 168) {
+                    std::cout << "Valori invalide.\n";
+                    curataInput();
+                    continue;
+                }
+
+                orbitwatch::ComparatorLocatii comparator(
+                    catalog, manager, epochStart, std::chrono::hours{oreComp});
+                std::cout << '\n' << comparator;
+
+                const auto eligibile = comparator.filtreazaCuTreceriMinime(minimTreceri);
+                std::cout << "Locatii analizate: " << comparator.clasament().size()
+                          << " | Cu minim " << minimTreceri << " treceri: " << eligibile.size() << '\n';
+                if (const auto top = comparator.ceaMaiBunaLocatie()) {
+                    std::cout << "Recomandare principala: " << top->locatie().nume()
+                              << " (fara conflicte: " << top->numarTreceriFaraConflicte()
+                              << ", scor max: " << top->scorMaxim() << ")\n";
+                }
             } else {
                 std::cout << "Optiune necunoscuta.\n";
             }
