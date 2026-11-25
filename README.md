@@ -1,60 +1,39 @@
-# Nu primesc notă pentru că nu am pus titlu și descriere
+# Orbit Watch
 
-### Folosiți template-ul corespunzător grupei voastre!
+**Orbit Watch** este o aplicație C++ pentru urmărirea sateliților artificiali, calculul trecerilor vizibile și planificarea sesiunilor de observare astronomică.
 
-| Laborant  | Link template                                |
-|-----------|----------------------------------------------|
-| Dragoș B  | https://github.com/Ionnier/oop-template      |
-| Tiberiu M | https://github.com/MaximTiberiu/oop-template |
-| Marius MC | https://github.com/mcmarius/oop-template     |
-
-### Important!
-
-Aveți voie cu agenți care generează cod doar dacă păstrați AGENTS.md și de `.internal/` *pe toată durata semestrului*.
-Știm că se poate trișa foarte ușor. Ideea nu este să învățați să trișați mai bine, ci să înțelegeți ce faceți.
-Codul generat pus "ca să fie"/pe care nu îl înțelegeți nu se punctează.
-
-Codul din proiect trebuie să poată fi ușor de înțeles și de modificat de către altcineva. Pentru detalii, veniți la ore.
-
-O cerință nu se consideră îndeplinită dacă este realizată doar prin cod generat.
-
-- **Fără cod de umplutură/fără sens!**
-- **Fără copy-paste!**
-- **Fără variabile globale!**
-- **Fără atribute publice!**
-- **Fără date în cod!** Datele vor fi citite din fișier, rețea sau bază de date, aveți exemple destule.
-- **Obligatoriu** fișiere cu date mai multe din care să citiți, obligatoriu cu biblioteci externe: fișiere (local sau server) sau baze de date
-- obligatoriu (TBD) să integrați cel puțin două biblioteci externe pe lângă cele pentru stocare
-
-**NOU!** Livrabile pentru toate temele:
-- aplicație
-- bibliotecă
-- interfața publică pentru bibliotecă
+### Funcționalități principale
+- Încărcarea datelor orbitale ale sateliților (`assets/sateliti.json`) și a catalogului de locații de observare cu scala Bortle (`assets/locatii.json`) folosind `nlohmann/json`.
+- Propagare orbitală simplificată și calculul trecerilor vizibile (elevație maximă, azimut, durată, magnitudine estimată) pentru diferite tipuri de sateliți (`StatieSpatiala`, `SatelitStarlink`, `TelescopSpatial`).
+- Filtrarea trecerilor după elevație minimă și identificarea celei mai bune treceri (magnitudine minimă).
+- Generarea de rapoarte statistice detaliate și export în formate `.csv` și `.txt` (`RaportTreceri`).
+- Planificarea observațiilor cu calcul de scor (0–100) în funcție de poluarea luminoasă locală (NELM / Bortle), detectarea conflictelor de programare și selecția unui program fără suprapuneri (`PlanificatorObservatii`).
+- Compararea automată a tuturor locațiilor din catalog și generarea unui clasament de observare (`ComparatorLocatii`).
 
 ### Tema 0
 
-- [ ] Nume proiect (poate fi schimbat ulterior)
-- [ ] Scurtă descriere a temei alese, ce v-ați propus să implementați
+- [x] Nume proiect (poate fi schimbat ulterior)
+- [x] Scurtă descriere a temei alese, ce v-ați propus să implementați
 
 ## Tema 1
 
 #### Cerințe
-- [ ] definirea a minim **3-4 clase** folosind compunere cu clasele definite de voi; moștenirile nu se iau în considerare aici
-- [ ] constructori de inițializare cu parametri pentru fiecare clasă
-- [ ] pentru o aceeași (singură) clasă: constructor de copiere, `operator=` de copiere, destructor
+- [x] definirea a minim **3-4 clase** folosind compunere cu clasele definite de voi; moștenirile nu se iau în considerare aici
+- [x] constructori de inițializare cu parametri pentru fiecare clasă
+- [x] pentru o aceeași (singură) clasă: constructor de copiere, `operator=` de copiere, destructor (`ManagerTreceri`)
 <!-- - [ ] pentru o altă clasă: constructor de mutare, `operator=` de mutare, destructor -->
 <!-- - [ ] pentru o altă clasă: toate cele 5 funcții membru speciale -->
-- [ ] `operator<<` pentru **toate** clasele pentru afișare (`std::ostream`) folosind compunere de apeluri cu `operator<<`
-- [ ] cât mai multe `const` (unde este cazul) și funcții `private`
-- [ ] implementarea a minim 3 funcții membru publice pentru funcționalități netriviale specifice temei alese, dintre care cel puțin 1-2 funcții mai complexe
+- [x] `operator<<` pentru **toate** clasele pentru afișare (`std::ostream`) folosind compunere de apeluri cu `operator<<`
+- [x] cât mai multe `const` (unde este cazul) și funcții `private`
+- [x] implementarea a minim 3 funcții membru publice pentru funcționalități netriviale specifice temei alese, dintre care cel puțin 1-2 funcții mai complexe
   - nu doar citiri/afișări sau adăugat/șters elemente într-un/dintr-un vector
-- [ ] scenariu de utilizare **cu sens** a claselor definite:
+- [x] scenariu de utilizare **cu sens** a claselor definite:
   - crearea de obiecte și apelarea tuturor funcțiilor membru publice în main
   - vor fi adăugate în fișierul `tastatura.txt` DOAR exemple de date de intrare de la tastatură (dacă există) pentru a acoperi cât mai multe cazuri; dacă aveți nevoie de date din fișiere, creați alte fișiere separat
-- [ ] minim 52-60% din codul propriu să fie C++, adică să aveți mai mult cod decât ce e inclus în template; testele nu se pun, nu vă luați după procentajul din interfața web; detalii la ore
+- [x] minim 52-60% din codul propriu să fie C++, adică să aveți mai mult cod decât ce e inclus în template; testele nu se pun, nu vă luați după procentajul din interfața web; detalii la ore
 - [x] `.gitattributes` configurat corect (nu trebuie făcute modificări aici)
-- [ ] tag de `git`: de exemplu `v0.1`
-- [ ] serviciu de integrare continuă (CI) cu **toate bifele**; exemplu: GitHub Actions
+- [x] tag de `git`: de exemplu `v0.1`
+- [x] serviciu de integrare continuă (CI) cu **toate bifele**; exemplu: GitHub Actions
 - [ ] code review #1 2 proiecte
 
 ## Tema 2
@@ -202,8 +181,12 @@ Comanda este aceeași ca la pasul 1 sau 2. Nu merge combinat cu Valgrind.
 
 The project is licensed under [AGPLv3](LICENSE).
 
-The [template repository](https://github.com/mcmarius/oop-template) itself is licensed under [Unlicense](LICENSE.template).
+The [template repository](https://github.com/tibmax01/oop-template) itself is licensed under [Unlicense](LICENSE.template).
 
 ## Resurse
 
-- adăugați trimiteri **detaliate** către resursele externe care v-au ajutat sau pe care le-ați folosit
+- [nlohmann/json](https://github.com/nlohmann/json) — bibliotecă C++ folosită pentru parsarea fișierelor `assets/sateliti.json` și `assets/locatii.json`
+- [CelesTrak — Orbital Elements / TLE](https://celestrak.org/) — referință pentru parametrii orbitali (inclinație, RAAN, excentricitate, mean motion)
+- [Bortle Dark-Sky Scale](https://en.wikipedia.org/wiki/Bortle_scale) — referință pentru estimarea poluării luminoase și a magnitudinii limită vizibile (NELM)
+- [Haversine Formula](https://en.wikipedia.org/wiki/Haversine_formula) — calculul distanței geodezice între două locații geografice
+
