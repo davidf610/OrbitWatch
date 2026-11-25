@@ -56,8 +56,6 @@ FetchContent_MakeAvailable(ftxui)
 add_library(oop STATIC
         src/Coordonate.cpp
         src/ElementeOrbitale.cpp
-        src/Coordonate.cpp
-        src/ElementeOrbitale.cpp
         include/Satelit.hpp
         src/Satelit.cpp
         include/StatieSpatiala.hpp
@@ -80,6 +78,14 @@ add_library(oop STATIC
 add_executable(${MAIN_EXECUTABLE_NAME}
     app/main.cpp
 )
+
+if(APPLE)
+    set_target_properties(oop_main PROPERTIES
+            BUILD_RPATH "@executable_path;@executable_path/lib;@executable_path/../lib"
+            INSTALL_RPATH "@executable_path;@executable_path/lib;@executable_path/../lib"
+    )
+endif()
+
 target_sources(${MAIN_LIBRARY_NAME}
     PRIVATE
 
